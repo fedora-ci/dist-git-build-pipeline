@@ -74,11 +74,11 @@ pipeline {
 		        KOJI_KEYTAB = credentials('fedora-keytab')
                 REPO_FULL_NAME = "${repoFullName}"
                 REPO_NAME = "${repoName}"
-                RELEASE_ID = ${targetBranch}
-                PR_ID = ${prId}
-                PR_UID = ${prUid}
-                PR_COMMIT = ${prCommit}
-                PR_COMMENT = ${prComment}
+                RELEASE_ID = "${targetBranch}"
+                PR_ID = "${prId}"
+                PR_UID = "${prUid}"
+                PR_COMMIT = "${prCommit}"
+                PR_COMMENT = "${prComment}"
 	        }
 
             steps {

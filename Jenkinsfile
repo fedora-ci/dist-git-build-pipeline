@@ -71,7 +71,7 @@ pipeline {
             }
 
             environment {
-		        KOJI_KEYTAB = credentials('fedora-keytab')
+                KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
                 REPO_FULL_NAME = "${repoFullName}"
                 REPO_NAME = "${repoName}"
@@ -80,7 +80,7 @@ pipeline {
                 PR_UID = "${prUid}"
                 PR_COMMIT = "${prCommit}"
                 PR_COMMENT = "${prComment}"
-	        }
+            }
 
             steps {
                 container('koji') {

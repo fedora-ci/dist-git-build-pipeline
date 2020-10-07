@@ -74,7 +74,7 @@ pipeline {
 		        KOJI_KEYTAB = credentials('fedora-keytab')
                 REPO_FULL_NAME = "${repoFullName}"
                 REPO_NAME = "${repoName}"
-                RELEASE_ID = "${targetBranch}"
+                RELEASE_ID = "${releaseId}"
                 PR_ID = "${prId}"
                 PR_UID = "${prUid}"
                 PR_COMMIT = "${prCommit}"
@@ -83,6 +83,13 @@ pipeline {
 
             steps {
                 container('koji') {
+                    echo "REPO_FULL_NAME: ${REPO_FULL_NAME}"
+                    echo "REPO_NAME: ${REPO_NAME}"
+                    echo "RELEASE_ID: ${releaseId}"
+                    echo "PR_ID: ${PR_ID}"
+                    echo "PR_UID: ${PR_UID}"
+                    echo "PR_COMMIT: ${PR_COMMIT}"
+                    echo "PR_COMMENT: ${PR_COMMENT}"
                     sh('pullRequest2scratchBuild.sh')
                 }
             }

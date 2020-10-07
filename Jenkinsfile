@@ -44,8 +44,8 @@ pipeline {
                 script {
                     msg = readJSON text: CI_MESSAGE
 
-                    repoFullName = msg['pullrequest']['fullname']
-                    repoName = msg['pullrequest']['name']
+                    repoFullName = msg['pullrequest']['project']['fullname']
+                    repoName = msg['pullrequest']['project']['name']
                     targetBranch = msg['pullrequest']['branch']
 
                     prId = msg['pullrequest']['id']

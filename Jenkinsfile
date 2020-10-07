@@ -27,7 +27,7 @@ pipeline {
                         queue: 'osci-pipelines-queue-5'
                     ],
                     checks: [
-                        [field: '$.pullrequest.namespace', expectedValue: '^rpms$']
+                        [field: '$.pullrequest.project.namespace', expectedValue: '^rpms$']
                     ]
                 )
             ]

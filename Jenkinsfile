@@ -90,6 +90,8 @@ pipeline {
                     echo "PR_UID: ${PR_UID}"
                     echo "PR_COMMIT: ${PR_COMMIT}"
                     echo "PR_COMMENT: ${PR_COMMENT}"
+
+                    sh("klist -k -t ${KOJI_KEYTAB}")
                     sh('pullRequest2scratchBuild.sh')
                 }
             }

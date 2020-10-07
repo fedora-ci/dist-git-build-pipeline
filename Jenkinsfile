@@ -72,6 +72,7 @@ pipeline {
 
             environment {
 		        KOJI_KEYTAB = credentials('fedora-keytab')
+                KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
                 REPO_FULL_NAME = "${repoFullName}"
                 REPO_NAME = "${repoName}"
                 RELEASE_ID = "${releaseId}"
@@ -91,7 +92,6 @@ pipeline {
                     echo "PR_COMMIT: ${PR_COMMIT}"
                     echo "PR_COMMENT: ${PR_COMMENT}"
 
-                    sh("klist -k -t ${KOJI_KEYTAB}")
                     sh('pullRequest2scratchBuild.sh')
                 }
             }

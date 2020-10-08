@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     releaseId
-                    if (params.TARGET_BRANCH != 'master') {
+                    if (TARGET_BRANCH != 'master') {
                         releaseId = "f${targetBranch}"
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
@@ -42,8 +42,13 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
-                REPO_NAME = "${repoFullName.split('/')[1]}"
+                REPO_FULL_NAME = "${REPO_FULL_NAME}"
+                REPO_NAME = "${REPO_FULL_NAME.split('/')[1]}"
                 RELEASE_ID = "${releaseId}"
+                PR_ID = "${PR_ID}"
+                PR_UID = "${PR_UID}"
+                PR_COMMIT = "${PR_COMMIT}"
+                PR_COMMENT = "${PR_COMMENT}"
             }
 
             steps {

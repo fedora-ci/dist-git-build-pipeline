@@ -1,12 +1,5 @@
 #!groovy
 
-
-def msg
-def repoFullName
-def repoName
-def targetBranch
-def prId
-def prUid
 def releaseId
 
 
@@ -16,26 +9,13 @@ pipeline {
         label 'master'
     }
 
-    triggers {
-        ciBuildTrigger(
-            noSquash: true,
-            providerList: [
-                rabbitMQSubscriber(
-                    name: env.FEDORA_CI_MESSAGE_PROVIDER,
-                    overrides: [
-                        topic: 'org.fedoraproject.prod.pagure.pull-request.new',
-                        queue: 'osci-pipelines-queue-5'
-                    ],
-                    checks: [
-                        [field: '$.pullrequest.project.namespace', expectedValue: '^rpms$']
-                    ]
-                )
-            ]
-        )
-    }
-
     parameters {
-        string(name: 'CI_MESSAGE', defaultValue: '{}', description: 'CI Message')
+        string(name: 'REPO_FULL_NAME', defaultValue: '', description: 'Full name of the repository; for example: "rpms/jenkins"')
+        string(name: 'TARGET_BRANCH', defaultValue: 'master', description: 'Name of the target branch where the pull request should be merged')
+        string(name: 'PR_ID', defaultValue: '1', description: 'Pull-Request Id (number)')
+        string(name: 'PR_UID', defaultValue: '', description: "Pagure's unique internal pull-request Id")
+        string(name: 'PR_COMMIT', defaultValue: '', description: 'Commit Id (hash) of the last commit in the pull-request')
+        string(name: 'PR_COMMENT', defaultValue: '0', description: "Pagure's internal Id of the comment which triggered CI testing; 0 (zero) if the testing was triggered by simply opening the pull-request")
     }
 
     stages {
@@ -43,15 +23,6 @@ pipeline {
             steps {
                 script {
                     msg = readJSON text: CI_MESSAGE
-
-                    repoFullName = msg['pullrequest']['project']['fullname']
-                    repoName = msg['pullrequest']['project']['name']
-                    targetBranch = msg['pullrequest']['branch']
-
-                    prId = msg['pullrequest']['id']
-                    prUid = msg['pullrequest']['uid']
-                    prCommit = msg['pullrequest']['commit_stop']
-                    prComment = 0
 
                     releaseId
                     if (targetBranch != 'master') {
@@ -73,13 +44,8 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
-                REPO_FULL_NAME = "${repoFullName}"
-                REPO_NAME = "${repoName}"
+                REPO_NAME = "${repoFullName.split('/')[1]}"
                 RELEASE_ID = "${releaseId}"
-                PR_ID = "${prId}"
-                PR_UID = "${prUid}"
-                PR_COMMIT = "${prCommit}"
-                PR_COMMENT = "${prComment}"
             }
 
             steps {

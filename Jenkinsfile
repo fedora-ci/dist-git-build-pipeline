@@ -1,6 +1,7 @@
 #!groovy
 
 def releaseId
+def sourceRepo
 
 
 pipeline {
@@ -29,8 +30,9 @@ pipeline {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     }
 
-                    if (!SOURCE_REPO_FULL_NAME) {
-                        SOURCE_REPO_FULL_NAME="${REPO_FULL_NAME}"
+                    sourceRepo = SOURCE_REPO_FULL_NAME
+                    if (!sourceRepo) {
+                        sourceRepo="${REPO_FULL_NAME}"
                     }
                 }
             }
@@ -47,7 +49,7 @@ pipeline {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
                 REPO_FULL_NAME = "${REPO_FULL_NAME}"
-                SOURCE_REPO_FULL_NAME = "${SOURCE_REPO_FULL_NAME}"
+                SOURCE_REPO_FULL_NAME = "${sourceRepo}"
                 REPO_NAME = "${REPO_FULL_NAME.split('/')[1]}"
                 RELEASE_ID = "${releaseId}"
                 PR_ID = "${PR_ID}"
@@ -58,14 +60,6 @@ pipeline {
 
             steps {
                 container('koji') {
-                    echo "REPO_FULL_NAME: ${REPO_FULL_NAME}"
-                    echo "REPO_NAME: ${REPO_NAME}"
-                    echo "RELEASE_ID: ${releaseId}"
-                    echo "PR_ID: ${PR_ID}"
-                    echo "PR_UID: ${PR_UID}"
-                    echo "PR_COMMIT: ${PR_COMMIT}"
-                    echo "PR_COMMENT: ${PR_COMMENT}"
-
                     sh('pullRequest2scratchBuild.sh')
                 }
             }

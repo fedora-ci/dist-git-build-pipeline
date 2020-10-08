@@ -22,10 +22,8 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    msg = readJSON text: CI_MESSAGE
-
                     releaseId
-                    if (targetBranch != 'master') {
+                    if (params.TARGET_BRANCH != 'master') {
                         releaseId = "f${targetBranch}"
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID

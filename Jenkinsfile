@@ -10,7 +10,8 @@ pipeline {
     }
 
     parameters {
-        string(name: 'REPO_FULL_NAME', defaultValue: '', description: 'Full name of the repository; for example: "rpms/jenkins"')
+        string(name: 'REPO_FULL_NAME', defaultValue: '', description: 'Full name of the target repository; for example: "rpms/jenkins"')
+        string(name: 'SOURCE_REPO_FULL_NAME', defaultValue: '', description: 'Full name of the source repository; for example: "fork/msrb/rpms/jenkins"')
         string(name: 'TARGET_BRANCH', defaultValue: 'master', description: 'Name of the target branch where the pull request should be merged')
         string(name: 'PR_ID', defaultValue: '1', description: 'Pull-Request Id (number)')
         string(name: 'PR_UID', defaultValue: '', description: "Pagure's unique internal pull-request Id")
@@ -23,9 +24,13 @@ pipeline {
             steps {
                 script {
                     if (TARGET_BRANCH != 'master') {
-                        releaseId = "f${targetBranch}"
+                        releaseId = TARGET_BRANCH
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
+                    }
+
+                    if (!SOURCE_REPO_FULL_NAME) {
+                        SOURCE_REPO_FULL_NAME="${REPO_FULL_NAME}"
                     }
                 }
             }
@@ -42,6 +47,7 @@ pipeline {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
                 REPO_FULL_NAME = "${REPO_FULL_NAME}"
+                SOURCE_REPO_FULL_NAME = "${SOURCE_REPO_FULL_NAME}"
                 REPO_NAME = "${REPO_FULL_NAME.split('/')[1]}"
                 RELEASE_ID = "${releaseId}"
                 PR_ID = "${PR_ID}"

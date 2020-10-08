@@ -24,6 +24,11 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
+                    if (!REPO_FULL_NAME) {
+                        currentBuild.result = 'ABORTED'
+                        error('Bad input, nothing to do.')
+                    }
+
                     if (TARGET_BRANCH != 'master') {
                         releaseId = TARGET_BRANCH
                     } else {

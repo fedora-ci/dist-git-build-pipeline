@@ -22,7 +22,6 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    releaseId
                     if (TARGET_BRANCH != 'master') {
                         releaseId = "f${targetBranch}"
                     } else {

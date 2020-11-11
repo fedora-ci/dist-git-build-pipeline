@@ -1,8 +1,23 @@
 #!groovy
 
+@Library('fedora-pipeline-library@candidate2') _
+
 def releaseId
 def sourceRepo
 
+def artifactId
+def pipelineMetadata = [
+    pipelineName: 'dist-git',
+    pipelineDescription: 'Run tier-0 tests from dist-git',
+    testCategory: 'functional',
+    testType: 'tier0',
+    maintainer: 'Fedora CI',
+    docs: 'https://github.com/fedora-ci/dist-git-pipeline',
+    contact: [
+        irc: '#fedora-ci',
+        email: 'ci@lists.fedoraproject.org'
+    ],
+]
 
 pipeline {
 
@@ -29,6 +44,8 @@ pipeline {
                         error('Bad input, nothing to do.')
                     }
 
+                    artifactId = "fedora-dist-git:${env.PR_UID}@${env.PR_COMMIT}#${env.PR_COMMENT}"
+                    sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
                     if (TARGET_BRANCH != 'master') {
                         releaseId = TARGET_BRANCH
                     } else {
@@ -64,6 +81,7 @@ pipeline {
             }
 
             steps {
+                sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
                 container('koji') {
                     sh('pullRequest2scratchBuild.sh')
                 }

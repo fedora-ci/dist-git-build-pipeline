@@ -98,4 +98,9 @@ pipeline {
             }
         }
     }
+    post {
+        failure {
+            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
+        }
+    }
 }

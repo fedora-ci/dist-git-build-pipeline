@@ -19,6 +19,17 @@ def pipelineMetadata = [
     ],
 ]
 
+def podYAML = """
+spec:
+  containers:
+  - name: koji-client
+    # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
+    image: quay.io/fedoraci/pipeline-library-agent:candidate
+    tty: true
+    alwaysPullImage: true
+"""
+
+
 pipeline {
 
     agent {
@@ -63,7 +74,8 @@ pipeline {
         stage('Scratch-Build in Koji') {
             agent {
                 kubernetes {
-                    label 'koji-agent'
+                    yaml podYAML
+                    defaultContainer 'koji-client'
                 }
             }
 
@@ -82,9 +94,7 @@ pipeline {
 
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                container('koji') {
-                    sh('pullRequest2scratchBuild.sh')
-                }
+                sh('pullRequest2scratchBuild.sh')
             }
         }
     }

@@ -33,7 +33,7 @@ spec:
 pipeline {
 
     agent {
-        label 'master'
+        label 'dist-git-build'
     }
 
     parameters {

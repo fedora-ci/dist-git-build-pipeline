@@ -8,11 +8,11 @@ def sourceRepo
 def artifactId
 def pipelineMetadata = [
     pipelineName: 'dist-git',
-    pipelineDescription: 'Run tier-0 tests from dist-git',
-    testCategory: 'functional',
-    testType: 'tier0',
+    pipelineDescription: 'create an scratch build from PR',
+    testCategory: 'static-analysis',
+    testType: 'build',
     maintainer: 'Fedora CI',
-    docs: 'https://github.com/fedora-ci/dist-git-pipeline',
+    docs: 'https://github.com/fedora-ci/dist-git-build-pipeline',
     contact: [
         irc: '#fedora-ci',
         email: 'ci@lists.fedoraproject.org'
@@ -99,6 +99,11 @@ pipeline {
         }
     }
     post {
+        success {
+            script {
+                sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
+            }
+        }
         failure {
             sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
         }

@@ -56,6 +56,9 @@ pipeline {
                     }
 
                     artifactId = "fedora-dist-git:${params.PR_UID}@${params.PR_COMMIT}#${params.PR_COMMENT}"
+
+                    setBuildNameFromArtifactId(artifactId: artifactId)
+
                     sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
                     if (TARGET_BRANCH != 'master') {
                         releaseId = params.TARGET_BRANCH

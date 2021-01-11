@@ -24,7 +24,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:5dce69c
+    image: quay.io/fedoraci/pipeline-library-agent:9daf458
     tty: true
     alwaysPullImage: true
 """
@@ -87,7 +87,7 @@ pipeline {
 
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                sh("pr2scratch.sh koji wait ${releaseId} git+https://${env.FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.SOURCE_REPO_FULL_NAME}.git#${params.PR_COMMIT}")
+                sh("pr2scratch.sh koji wait ${releaseId} git+${env.FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.SOURCE_REPO_FULL_NAME}.git#${params.PR_COMMIT}")
             }
         }
     }

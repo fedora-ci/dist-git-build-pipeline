@@ -24,7 +24,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:candidate2
+    image: quay.io/fedoraci/pipeline-library-agent:4d7f1c1
     tty: true
     alwaysPullImage: true
 """
@@ -90,6 +90,7 @@ pipeline {
                 PR_UID = "${PR_UID}"
                 PR_COMMIT = "${PR_COMMIT}"
                 PR_COMMENT = "${PR_COMMENT}"
+                KOJI_OPTS = "--wait"
             }
 
             steps {

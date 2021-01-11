@@ -50,22 +50,22 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    if (!REPO_FULL_NAME) {
+                    if (!params.REPO_FULL_NAME) {
                         currentBuild.result = 'ABORTED'
                         error('Bad input, nothing to do.')
                     }
 
-                    artifactId = "fedora-dist-git:${env.PR_UID}@${env.PR_COMMIT}#${env.PR_COMMENT}"
+                    artifactId = "fedora-dist-git:${params.PR_UID}@${params.PR_COMMIT}#${params.PR_COMMENT}"
                     sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
                     if (TARGET_BRANCH != 'master') {
-                        releaseId = TARGET_BRANCH
+                        releaseId = params.TARGET_BRANCH
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     }
 
-                    sourceRepo = SOURCE_REPO_FULL_NAME
+                    sourceRepo = params.SOURCE_REPO_FULL_NAME
                     if (!sourceRepo) {
-                        sourceRepo="${REPO_FULL_NAME}"
+                        sourceRepo="${params.REPO_FULL_NAME}"
                     }
                 }
             }
@@ -82,14 +82,14 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
-                REPO_FULL_NAME = "${REPO_FULL_NAME}"
+                REPO_FULL_NAME = "${params.REPO_FULL_NAME}"
                 SOURCE_REPO_FULL_NAME = "${sourceRepo}"
-                REPO_NAME = "${REPO_FULL_NAME.split('/')[1]}"
+                REPO_NAME = "${params.REPO_FULL_NAME.split('/')[1]}"
                 RELEASE_ID = "${releaseId}"
-                PR_ID = "${PR_ID}"
-                PR_UID = "${PR_UID}"
-                PR_COMMIT = "${PR_COMMIT}"
-                PR_COMMENT = "${PR_COMMENT}"
+                PR_ID = "${params.PR_ID}"
+                PR_UID = "${params.PR_UID}"
+                PR_COMMIT = "${params.PR_COMMIT}"
+                PR_COMMENT = "${params.PR_COMMENT}"
                 KOJI_OPTS = "--wait"
             }
 

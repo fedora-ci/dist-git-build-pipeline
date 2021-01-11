@@ -24,7 +24,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:candidate2
+    image: quay.io/fedoraci/pipeline-library-agent:5dce69c
     tty: true
     alwaysPullImage: true
 """
@@ -82,19 +82,12 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
-                REPO_FULL_NAME = "${REPO_FULL_NAME}"
-                SOURCE_REPO_FULL_NAME = "${sourceRepo}"
-                REPO_NAME = "${REPO_FULL_NAME.split('/')[1]}"
-                RELEASE_ID = "${releaseId}"
-                PR_ID = "${PR_ID}"
-                PR_UID = "${PR_UID}"
-                PR_COMMIT = "${PR_COMMIT}"
-                PR_COMMENT = "${PR_COMMENT}"
+                // ARCH_OVERRIDE = 'x86_64,i686'
             }
 
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                sh('pullRequest2scratchBuild.sh')
+                sh("pr2scratch.sh koji wait ${releaseId} git+https://${FEDORA_CI_PAGURE_DIST_GIT_URL}/${SOURCE_REPO_FULL_NAME}.git#${PR_COMMIT}")
             }
         }
     }

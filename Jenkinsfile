@@ -50,22 +50,22 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    if (!REPO_FULL_NAME) {
+                    if (!params.REPO_FULL_NAME) {
                         currentBuild.result = 'ABORTED'
                         error('Bad input, nothing to do.')
                     }
 
-                    artifactId = "fedora-dist-git:${env.PR_UID}@${env.PR_COMMIT}#${env.PR_COMMENT}"
+                    artifactId = "fedora-dist-git:${params.PR_UID}@${params.PR_COMMIT}#${params.PR_COMMENT}"
                     sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                    if (TARGET_BRANCH != 'master') {
+                    if (params.TARGET_BRANCH != 'master') {
                         releaseId = TARGET_BRANCH
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     }
 
-                    sourceRepo = SOURCE_REPO_FULL_NAME
+                    sourceRepo = params.SOURCE_REPO_FULL_NAME
                     if (!sourceRepo) {
-                        sourceRepo="${REPO_FULL_NAME}"
+                        sourceRepo="${params.REPO_FULL_NAME}"
                     }
                 }
             }
@@ -87,7 +87,7 @@ pipeline {
 
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                sh("pr2scratch.sh koji wait ${releaseId} git+https://${FEDORA_CI_PAGURE_DIST_GIT_URL}/${SOURCE_REPO_FULL_NAME}.git#${PR_COMMIT}")
+                sh("pr2scratch.sh koji wait ${releaseId} git+https://${env.FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.SOURCE_REPO_FULL_NAME}.git#${params.PR_COMMIT}")
             }
         }
     }

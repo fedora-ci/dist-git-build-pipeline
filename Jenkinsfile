@@ -1,9 +1,11 @@
 #!groovy
 
-@Library('fedora-pipeline-library@candidate2') _
+@Library('fedora-pipeline-library@34df5c8bb8ffa114b9dd7d704ebce4266211d779') _
 
 def releaseId
 def sourceRepo
+
+def kojiUrl
 
 def artifactId
 def pipelineMetadata = [
@@ -24,7 +26,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:9527868
+    image: quay.io/fedoraci/pipeline-library-agent:251bda2
     tty: true
     alwaysPullImage: true
 """
@@ -97,18 +99,29 @@ pipeline {
 
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                sh('pullRequest2scratchBuild.sh')
+                script {
+                    def rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
+                    if (fileExists('koji_url')) {
+                        kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
+                    }
+                    catchError(buildResult: 'UNSTABLE') {
+                        if (rc != 0) {
+                            error('Failed to scratch build the pull request.')
+                        }
+                    }
+                }
             }
         }
     }
     post {
         success {
-            script {
-                sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-            }
+            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
         }
         failure {
-            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
+            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+        }
+        unstable {
+            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
         }
     }
 }

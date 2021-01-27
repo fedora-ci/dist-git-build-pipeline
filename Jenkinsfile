@@ -26,7 +26,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:769eb39
+    image: quay.io/fedoraci/pipeline-library-agent:c42b1a0
     tty: true
     alwaysPullImage: true
 """
@@ -48,6 +48,7 @@ pipeline {
         string(name: 'PR_COMMENT', defaultValue: '0', description: "Pagure's internal Id of the comment which triggered CI testing; 0 (zero) if the testing was triggered by simply opening the pull-request")
 
         string(name: 'ARTIFACT_ID', defaultValue: '', description: 'Artifact ID')
+        string(name: 'NVR', defaultValue: '', description: 'Artifact NVR')
         string(name: 'BUILD_TARGET', defaultValue: '', description: 'Name of the Koji build target')
         string(name: 'TEST_SCENARIO', defaultValue: '', description: "(optional) Name of the test scenario")
     }
@@ -125,6 +126,7 @@ pipeline {
                         rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
                     } else {
                         // this is a regular scratch-build request
+                        sh("build2sidetag.sh ${releaseId}-build ${params.NVR}")
                         rc = sh(returnStatus: true, script: "scratch.sh koji ${params.BUILD_TARGET} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
                     }
                     if (fileExists('koji_url')) {

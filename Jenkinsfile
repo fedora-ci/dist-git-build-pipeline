@@ -26,7 +26,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:da53bf1
+    image: quay.io/fedoraci/pipeline-library-agent:29323ab
     tty: true
     alwaysPullImage: true
 """
@@ -131,12 +131,13 @@ pipeline {
                         if (fileExists('sidetag_name')) {
                             sidetagName = readFile("${env.WORKSPACE}/sidetag_name").trim()
                         }
-                        catchError(buildResult: 'UNSTABLE') {
-                            if (!sidetagName) {
+                        if (sidetagName) {
+                            rc = sh(returnStatus: true, script: "scratch.sh koji ${sidetagName} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
+                        } else {
+                            catchError(buildResult: 'UNSTABLE') {
                                 error("Failed to create side-tag for ${nvr}.")
                             }
                         }
-                        rc = sh(returnStatus: true, script: "scratch.sh koji ${sidetagName} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
                     }
                     if (fileExists('koji_url')) {
                         kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()

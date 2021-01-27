@@ -26,7 +26,7 @@ spec:
   containers:
   - name: koji-client
     # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:96473da
+    image: quay.io/fedoraci/pipeline-library-agent:6063eae
     tty: true
     alwaysPullImage: true
 """

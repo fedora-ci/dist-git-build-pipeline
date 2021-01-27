@@ -126,8 +126,17 @@ pipeline {
                         rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
                     } else {
                         // this is a regular scratch-build request
-                        sh("build2sidetag.sh ${releaseId}-build ${params.NVR}")
-                        rc = sh(returnStatus: true, script: "scratch.sh koji ${params.BUILD_TARGET} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
+                        def sidetagName
+                        sh("build2sidetag.sh ${params.BUILD_TARGET} ${params.NVR}")
+                        if (fileExists('sidetag_name')) {
+                            sidetagName = readFile("${env.WORKSPACE}/sidetag_name").trim()
+                        }
+                        catchError(buildResult: 'UNSTABLE') {
+                            if (!sidetagName) {
+                                error("Failed to create side-tag for ${nvr}.")
+                            }
+                        }
+                        rc = sh(returnStatus: true, script: "scratch.sh koji ${sidetagName} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
                     }
                     if (fileExists('koji_url')) {
                         kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()

@@ -11,8 +11,8 @@ def artifactId
 def pipelineMetadata = [
     pipelineName: 'dist-git',
     pipelineDescription: 'create an scratch build from PR',
-    testCategory: 'static-analysis',
-    testType: 'build',
+    testCategory: 'validation',
+    testType: 'scratch-build',
     maintainer: 'Fedora CI',
     docs: 'https://github.com/fedora-ci/dist-git-build-pipeline',
     contact: [

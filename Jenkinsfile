@@ -40,7 +40,7 @@ pipeline {
 
     parameters {
         string(name: 'REPO_FULL_NAME', defaultValue: '', description: 'Full name of the target repository; for example: "rpms/jenkins"')
-        string(name: 'TARGET_BRANCH', defaultValue: 'master', description: 'Name of the target branch where the pull request should be merged')
+        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'Name of the target branch where the pull request should be merged')
 
         string(name: 'ARTIFACT_ID', defaultValue: '', description: 'Artifact ID')
         string(name: 'NVR', defaultValue: '', description: 'Artifact NVR')

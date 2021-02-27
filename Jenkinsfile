@@ -46,11 +46,6 @@ pipeline {
         string(name: 'PR_UID', defaultValue: '', description: "Pagure's unique internal pull-request Id")
         string(name: 'PR_COMMIT', defaultValue: '', description: 'Commit Id (hash) of the last commit in the pull-request')
         string(name: 'PR_COMMENT', defaultValue: '0', description: "Pagure's internal Id of the comment which triggered CI testing; 0 (zero) if the testing was triggered by simply opening the pull-request")
-
-        string(name: 'ARTIFACT_ID', defaultValue: '', description: 'Artifact ID')
-        string(name: 'NVR', defaultValue: '', description: 'Artifact NVR')
-        string(name: 'BUILD_TARGET', defaultValue: '', description: 'Name of the Koji build target')
-        string(name: 'TEST_SCENARIO', defaultValue: '', description: "(optional) Name of the test scenario")
     }
 
     stages {
@@ -62,34 +57,21 @@ pipeline {
                         error('Bad input, nothing to do.')
                     }
 
-                    if (params.PR_UID) {
-                        // this is a pull request
-                        artifactId = "fedora-dist-git:${params.PR_UID}@${params.PR_COMMIT}#${params.PR_COMMENT}"
+                    artifactId = "fedora-dist-git:${params.PR_UID}@${params.PR_COMMIT}#${params.PR_COMMENT}"
 
-                        setBuildNameFromArtifactId(artifactId: artifactId)
+                    setBuildNameFromArtifactId(artifactId: artifactId)
 
-                        sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                        if (TARGET_BRANCH != 'master') {
-                            // fallback to rawhide in case this is not a standard fedora branch
-                            releaseId = (TARGET_BRANCH ==~ /f\d+/) ? params.TARGET_BRANCH : env.FEDORA_CI_RAWHIDE_RELEASE_ID
-                        } else {
-                            releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
-                        }
-
-                        sourceRepo = params.SOURCE_REPO_FULL_NAME
-                        if (!sourceRepo) {
-                            sourceRepo="${params.REPO_FULL_NAME}"
-                        }
+                    sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
+                    if (TARGET_BRANCH != 'master') {
+                        // fallback to rawhide in case this is not a standard fedora branch
+                        releaseId = (TARGET_BRANCH ==~ /f\d+/) ? params.TARGET_BRANCH : env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     } else {
-                        // this is a regular scratch-build request
-                        if (!params.ARTIFACT_ID) {
-                            currentBuild.result = 'ABORTED'
-                            error('Bad input, nothing to do.')
-                        }
-                        artifactId = "${params.ARTIFACT_ID}"
-                        setBuildNameFromArtifactId(artifactId: artifactId)
+                        releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
+                    }
 
-                        sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest())
+                    sourceRepo = params.SOURCE_REPO_FULL_NAME
+                    if (!sourceRepo) {
+                        sourceRepo="${params.REPO_FULL_NAME}"
                     }
                 }
             }
@@ -119,26 +101,7 @@ pipeline {
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest())
                 script {
-
-                    def rc
-                    if (params.PR_UID) {
-                        // this is a pull request
-                        rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
-                    } else {
-                        // this is a regular scratch-build request
-                        def sidetagName
-                        sh("build2sidetag.sh ${params.BUILD_TARGET} ${params.NVR}")
-                        if (fileExists('sidetag_name')) {
-                            sidetagName = readFile("${env.WORKSPACE}/sidetag_name").trim()
-                        }
-                        if (sidetagName) {
-                            rc = sh(returnStatus: true, script: "scratch.sh koji ${sidetagName} git+${FEDORA_CI_PAGURE_DIST_GIT_URL}/${params.REPO_FULL_NAME}#${params.TARGET_BRANCH}")
-                        } else {
-                            catchError(buildResult: 'UNSTABLE') {
-                                error("Failed to create side-tag for ${nvr}.")
-                            }
-                        }
-                    }
+                    def rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
                     if (fileExists('koji_url')) {
                         kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
                     }
@@ -153,13 +116,13 @@ pipeline {
     }
     post {
         success {
-            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest(), runUrl: kojiUrl)
+            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
         }
         failure {
-            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest(), runUrl: kojiUrl)
+            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
         }
         unstable {
-            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest(), runUrl: kojiUrl)
+            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
         }
     }
 }

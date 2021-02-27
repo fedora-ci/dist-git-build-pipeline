@@ -41,7 +41,7 @@ pipeline {
     parameters {
         string(name: 'REPO_FULL_NAME', defaultValue: '', description: 'Full name of the target repository; for example: "rpms/jenkins"')
         string(name: 'SOURCE_REPO_FULL_NAME', defaultValue: '', description: 'Full name of the source repository; for example: "fork/msrb/rpms/jenkins"')
-        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'Name of the target branch where the pull request should be merged')
+        string(name: 'TARGET_BRANCH', defaultValue: 'rawhide', description: 'Name of the target branch where the pull request should be merged')
         string(name: 'PR_ID', defaultValue: '1', description: 'Pull-Request Id (number)')
         string(name: 'PR_UID', defaultValue: '', description: "Pagure's unique internal pull-request Id")
         string(name: 'PR_COMMIT', defaultValue: '', description: 'Commit Id (hash) of the last commit in the pull-request')
@@ -62,7 +62,7 @@ pipeline {
                     setBuildNameFromArtifactId(artifactId: artifactId)
 
                     sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
-                    if (TARGET_BRANCH != 'master') {
+                    if (TARGET_BRANCH != 'rawhide') {
                         // fallback to rawhide in case this is not a standard fedora branch
                         releaseId = (TARGET_BRANCH ==~ /f\d+/) ? params.TARGET_BRANCH : env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     } else {

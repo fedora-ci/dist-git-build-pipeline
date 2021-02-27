@@ -63,8 +63,8 @@ pipeline {
 
                     sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest())
                     if (TARGET_BRANCH != 'rawhide') {
-                        // fallback to rawhide in case this is not a standard fedora branch
-                        releaseId = (TARGET_BRANCH ==~ /f\d+/) ? params.TARGET_BRANCH : env.FEDORA_CI_RAWHIDE_RELEASE_ID
+                        // fallback to rawhide in case this is not a standard fedora (or epel) branch
+                        releaseId = (params.TARGET_BRANCH ==~ /f\d+|epel\d+/) ? params.TARGET_BRANCH : env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     } else {
                         releaseId = env.FEDORA_CI_RAWHIDE_RELEASE_ID
                     }

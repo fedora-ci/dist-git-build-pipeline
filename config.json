@@ -1,0 +1,8 @@
+{
+    "profiles": {
+        "f35": {
+            "base_tag": "f35-build",
+            "package_tag": "f35-updates"
+        }
+    }
+}

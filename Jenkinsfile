@@ -34,6 +34,10 @@ pipeline {
         label 'scratch-build'
     }
 
+    libraries {
+        lib("fedora-pipeline-library@${env.PIPELINE_LIBRARY_VERSION}")
+    }
+
     options {
         buildDiscarder(logRotator(daysToKeepStr: env.DEFAULT_DAYS_TO_KEEP_LOGS, artifactNumToKeepStr: env.DEFAULT_ARTIFACTS_TO_KEEP))
         timeout(time: env.DEFAULT_PIPELINE_TIMEOUT_MINUTES, unit: 'MINUTES')

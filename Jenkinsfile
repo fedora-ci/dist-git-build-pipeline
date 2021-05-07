@@ -1,6 +1,11 @@
 #!groovy
 
-@Library('fedora-pipeline-library@fedora-stable') _
+retry (10) {
+    // load pipeline configuration into the environment
+    httpRequest("${FEDORA_CI_PIPELINES_CONFIG_URL}/environment").content.split('\n').each { l ->
+        l = l.trim(); if (l && !l.startsWith('#')) { env["${l.split('=')[0].trim()}"] = "${l.split('=')[1].trim()}" }
+    }
+}
 
 def releaseId
 def sourceRepo
@@ -24,6 +29,10 @@ def pipelineMetadata = [
 pipeline {
     agent {
         label 'scratch-build'
+    }
+
+    libraries {
+        lib("fedora-pipeline-library@${env.PIPELINE_LIBRARY_VERSION}")
     }
 
     parameters {

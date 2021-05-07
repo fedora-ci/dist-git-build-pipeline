@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('fedora-pipeline-library@e39c66874db516f9c33f052936d78b566b90be53') _
+@Library('fedora-pipeline-library@fedora-stable') _
 
 def releaseId
 def sourceRepo
@@ -21,9 +21,7 @@ def pipelineMetadata = [
     ],
 ]
 
-
 pipeline {
-
     agent {
         label 'scratch-build'
     }

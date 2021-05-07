@@ -10,7 +10,7 @@ def kojiUrl
 def artifactId
 def pipelineMetadata = [
     pipelineName: 'dist-git',
-    pipelineDescription: 'create an scratch build from PR',
+    pipelineDescription: 'Scratch-build Pull-Requests in Koji',
     testCategory: 'validation',
     testType: 'scratch-build',
     maintainer: 'Fedora CI',
@@ -21,21 +21,11 @@ def pipelineMetadata = [
     ],
 ]
 
-def podYAML = """
-spec:
-  containers:
-  - name: koji-client
-    # source: https://github.com/fedora-ci/jenkins-pipeline-library-agent-image
-    image: quay.io/fedoraci/pipeline-library-agent:22a6960
-    tty: true
-    alwaysPullImage: true
-"""
-
 
 pipeline {
 
     agent {
-        label 'dist-git-build'
+        label 'scratch-build'
     }
 
     parameters {
@@ -78,13 +68,6 @@ pipeline {
         }
 
         stage('Scratch-Build in Koji') {
-            agent {
-                kubernetes {
-                    yaml podYAML
-                    defaultContainer 'koji-client'
-                }
-            }
-
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
@@ -101,7 +84,7 @@ pipeline {
             steps {
                 sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest())
                 script {
-                    def rc = sh(returnStatus: true, script: 'pullRequest2scratchBuild.sh')
+                    def rc = sh(returnStatus: true, script: './pullRequest2scratchBuild.sh')
                     if (fileExists('koji_url')) {
                         kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
                     }

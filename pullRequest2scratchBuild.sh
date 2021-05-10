@@ -30,8 +30,15 @@
 workdir=${PWD}
 fedpkg_bin=${FEDPKG_BIN:-/usr/bin/fedpkg}
 pagure_url=${PAGURE_URL:-https://src.fedoraproject.org}
+mock_config="${RELEASE_ID}-x86_64"
 
-srpm_log=${workdir}/srpm.log
+# If the release id starts with "f", then assume it is a Fedora release (e.g.: f35)
+# and fix the mock config name
+if [[ "${RELEASE_ID}" == f* ]]; then
+    mock_config="fedora-${RELEASE_ID:1}-x86_64"
+fi
+
+srpm_log="${workdir}/mock_srpm.log"
 fedpkg_log=${workdir}/fedpkg.log
 koji_url=${workdir}/koji_url
 
@@ -69,9 +76,9 @@ prepare_repository ${REPO_FULL_NAME} ${PR_ID}
 cd ${REPO_NAME}
 
 # Build SRPM
-fedpkg --release ${RELEASE_ID} srpm > ${srpm_log}
-cat ${srpm_log}
-srpm_path=$(cat ${srpm_log} | grep 'Wrote:' | awk '{ print $2 }')
+fedpkg sources
+mock -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source . | tee "${srpm_log}"
+srpm_path=$(ls -1 | grep ".src.rpm$" | awk '{ print $1 }')
 srpm_name=$(basename ${srpm_path})
 new_srpm_name="fedora-ci_${PR_UID}_${PR_COMMIT}_${PR_COMMENT};${SOURCE_REPO_FULL_NAME//\//:}.${RELEASE_ID}.src.rpm"
 mv ${srpm_name} ${new_srpm_name}

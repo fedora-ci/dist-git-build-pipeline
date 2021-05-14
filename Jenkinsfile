@@ -11,6 +11,7 @@ def releaseId
 def sourceRepo
 
 def kojiUrl
+def taskId
 
 def artifactId
 def pipelineMetadata = [
@@ -89,15 +90,29 @@ pipeline {
             }
 
             steps {
-                sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: params.TEST_SCENARIO, dryRun: isPullRequest())
                 script {
-                    def rc = sh(returnStatus: true, script: './pullRequest2scratchBuild.sh')
-                    if (fileExists('koji_url')) {
-                        kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
+                    timeout(time: 240, unit: 'MINUTES') {
+                        // lock buildroot
+                        lock("${env.NODE_NAME}-mock-buildroot") {
+                            def rc = sh(returnStatus: true, script: './pullRequest2scratchBuild.sh')
+                            if (fileExists('koji_url')) {
+                                kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
+                            }
+                            if (fileExists('task_id')) {
+                                taskId = readFile("${env.WORKSPACE}/task_id").trim()
+                            }
+                            if (!kojiUrl || !taskId) {
+                                error('Failed to submit a scratch-build')
+                            }
+                        }
                     }
+                    sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+
+                    // Wait for the scratch-build to finish
+                    def rc = sh(returnStatus: true, script: "./wait-build.sh ${taskId}")
                     catchError(buildResult: 'UNSTABLE') {
                         if (rc != 0) {
-                            error('Failed to scratch build the pull request.')
+                            error("Scratch-build failed in Koji")
                         }
                     }
                 }

@@ -39,15 +39,17 @@ if [[ "${RELEASE_ID}" == f* ]]; then
 fi
 
 srpm_log="${workdir}/mock_srpm.log"
-fedpkg_log=${workdir}/fedpkg.log
-koji_url=${workdir}/koji_url
+fedpkg_log_file="${workdir}/fedpkg.log"
+koji_url_file="${workdir}/koji_url"
+task_id_file="${workdir}/task_id"
 
 set -e
 set -x
 
 rm -f ${srpm_log}
-rm -f ${fedpkg_log}
-rm -f ${koji_url}
+rm -f "${fedpkg_log_file}"
+rm -f "${koji_url_file}"
+rm -f "${task_id_file}"
 
 function cleanup() {
     # Remove directory, if it exists already
@@ -86,11 +88,8 @@ mv ${srpm_name} ${new_srpm_name}
 # Scratch-build the SRPM in Koji
 kinit -k -t ${KOJI_KEYTAB} ${KRB_PRINCIPAL}
 
-${fedpkg_bin} scratch-build --nowait ${FEDPKG_OPTS} --target ${RELEASE_ID} --srpm ${new_srpm_name} > ${fedpkg_log}
-cat ${fedpkg_log}
+${fedpkg_bin} scratch-build --nowait ${FEDPKG_OPTS} --target ${RELEASE_ID} --srpm ${new_srpm_name} | tee "${fedpkg_log_file}"
 
-cat ${fedpkg_log} | grep '^Task info: ' | awk '{ print $3 }' > ${koji_url}
+cat "${fedpkg_log_file}" | grep '^Task info: ' | awk '{ print $3 }' | tee "${koji_url_file}"
 
-task_id=$(cat ${fedpkg_log} | grep '^Created task: ' | awk '{ print $3 }')
-
-koji watch-task ${task_id}
+cat "${fedpkg_log_file}" | grep '^Created task: ' | awk '{ print $3 }' | tee "${task_id_file}"

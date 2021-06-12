@@ -36,6 +36,8 @@ mock_config="${RELEASE_ID}-x86_64"
 # and fix the mock config name
 if [[ "${RELEASE_ID}" == f* ]]; then
     mock_config="fedora-${RELEASE_ID:1}-x86_64"
+elif [[ "${RELEASE_ID}" == epel* ]]; then
+    mock_config="epel-${RELEASE_ID:4}-x86_64"
 fi
 
 srpm_log="${workdir}/mock_srpm.log"

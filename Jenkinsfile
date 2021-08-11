@@ -87,6 +87,7 @@ pipeline {
                 PR_UID = "${params.PR_UID}"
                 PR_COMMIT = "${params.PR_COMMIT}"
                 PR_COMMENT = "${params.PR_COMMENT}"
+                RAWHIDE_RELEASE_ID = "${FEDORA_CI_RAWHIDE_RELEASE_ID}"
             }
 
             steps {

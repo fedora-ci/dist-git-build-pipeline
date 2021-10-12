@@ -83,7 +83,9 @@ cd ${REPO_NAME}
 
 # Build SRPM
 # Download sources
+ls -la
 spectool -g *.spec
+ls -la
 mock --isolation=simple -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source . | tee "${srpm_log}"
 srpm_path=$(ls -1 | grep ".src.rpm$" | awk '{ print $1 }')
 srpm_name=$(basename ${srpm_path})

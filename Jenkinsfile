@@ -14,6 +14,7 @@ def taskId
 def kojiUrl
 def sourceUrl
 def config
+def scenario = 'rebuild/'
 
 def pipelineMetadata = [
     pipelineName: 'dist-git',
@@ -45,7 +46,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'ARTIFACT_ID', defaultValue: '', description: 'Artifact ID')
+        string(name: 'ARTIFACT_IDS', defaultValue: '', description: 'A comma-separated list of Artifact IDs -- these are the build that will be tagged in the side-tag')
         string(name: 'PACKAGE_NAME', defaultValue: '', description: 'A name of the package to scratch-build')
         string(name: 'TEST_PROFILE', defaultValue: env.FEDORA_CI_RAWHIDE_RELEASE_ID, description: "A name of the test profile to use; Example: ${env.FEDORA_CI_RAWHIDE_RELEASE_ID}")
     }
@@ -69,29 +70,34 @@ pipeline {
                     if (!artifactId) {
                         abort('PACKAGE_NAME is missing -- bad input, cannot continue...')
                     }
+                    scenario += packageName
 
                     checkout scm
                     config = loadConfig(profile: params.TEST_PROFILE)
 
-                    // Try to find the Source-URL (git url+hash) of the latest build of the given package
-                    sh("./find-source-url.sh ${packageName} ${config.package_tag}")
-                    if (fileExists('source_url')) {
-                        sourceUrl = readFile("${env.WORKSPACE}/source_url").trim()
-                    } else {
-                        error("Unable to determine Source-URL for package ${packageName}")
-                    }
-
-                    sendMessage(type: 'queued', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: packageName, dryRun: isPullRequest())
+                    sendMessage(
+                        type: 'queued',
+                        artifactId: artifactId,
+                        pipelineMetadata: pipelineMetadata,
+                        testScenario: scenario,
+                        dryRun: isPullRequest()
+                    )
                 }
             }
         }
 
-        stage('Prepare Side-Tag') {
+        stage('Prepare side-tag') {
             steps {
-                sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, testScenario: packageName, dryRun: isPullRequest())
+                sendMessage(
+                    type: 'running',
+                    artifactId: artifactId,
+                    pipelineMetadata: pipelineMetadata,
+                    testScenario: scenario,
+                    dryRun: isPullRequest()
+                )
                 script {
                     // create a new side-tag and tag the given artifact into it
-                    sh("./prepare-side-tag.sh ${getIdFromArtifactId(artifactId: artifactId)} ${config.base_tag}")
+                    sh("./prepare-side-tag.sh \"${getIdFromArtifactId(artifactId: artifactId)}\" ${config.base_tag}")
                     if (fileExists('sidetag_name')) {
                         sidetagName = readFile("${env.WORKSPACE}/sidetag_name").trim()
                     } else {
@@ -101,7 +107,21 @@ pipeline {
             }
         }
 
-        stage('Submit Scratch-Build') {
+        stage('Find package sources') {
+            steps {
+                script {
+                    // Try to find the Source-URL (git url+hash) of the latest build of the given package
+                    sh("./find-source-url.sh ${packageName} ${sidetagName}")
+                    if (fileExists('source_url')) {
+                        sourceUrl = readFile("${env.WORKSPACE}/source_url").trim()
+                    } else {
+                        error("Unable to determine Source-URL for package ${packageName}")
+                    }
+                }
+            }
+        }
+
+        stage('Submit scratch-build') {
             steps {
                 script {
                     // Submit a new scratch-build
@@ -116,12 +136,19 @@ pipeline {
                         error('Failed to submit a scratch-build')
                     }
                     // Send the "running" CI message second time -- this time with the Koji URL
-                    sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, runUrl: kojiUrl, testScenario: packageName, dryRun: isPullRequest())
+                    sendMessage(
+                        type: 'running',
+                        artifactId: artifactId,
+                        pipelineMetadata: pipelineMetadata,
+                        runUrl: kojiUrl,
+                        testScenario: scenario,
+                        dryRun: isPullRequest()
+                    )
                 }
             }
         }
 
-        stage('Wait for Scratch-Build') {
+        stage('Wait for Koji') {
             steps {
                 script {
                     // Wait for the scratch-build to finish
@@ -146,13 +173,33 @@ pipeline {
             }
         }
         success {
-            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, runUrl: kojiUrl, testScenario: packageName, dryRun: isPullRequest())
+            sendMessage(
+                type: 'complete',
+                artifactId: artifactId,
+                pipelineMetadata: pipelineMetadata,
+                runUrl: kojiUrl,
+                testScenario: scenario, dryRun: isPullRequest()
+            )
         }
         failure {
-            sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, runUrl: kojiUrl, testScenario: packageName, dryRun: isPullRequest())
+            sendMessage(
+                type: 'error',
+                artifactId: artifactId,
+                pipelineMetadata: pipelineMetadata,
+                runUrl: kojiUrl,
+                testScenario: scenario,
+                dryRun: isPullRequest()
+            )
         }
         unstable {
-            sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, runUrl: kojiUrl, testScenario: packageName, dryRun: isPullRequest())
+            sendMessage(
+                type: 'complete',
+                artifactId: artifactId,
+                pipelineMetadata: pipelineMetadata,
+                runUrl: kojiUrl,
+                testScenario: scenario,
+                dryRun: isPullRequest()
+            )
         }
     }
 }

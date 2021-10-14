@@ -46,7 +46,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'ARTIFACT_IDS', defaultValue: '', description: 'A comma-separated list of Artifact IDs -- these are the build that will be tagged in the side-tag')
+        string(name: 'ARTIFACT_ID', defaultValue: '', description: 'A comma-separated list of Artifact IDs -- these are the builds that will be tagged in the side-tag; Example: "koji-build:71637632"')
         string(name: 'PACKAGE_NAME', defaultValue: '', description: 'A name of the package to scratch-build')
         string(name: 'TEST_PROFILE', defaultValue: env.FEDORA_CI_RAWHIDE_RELEASE_ID, description: "A name of the test profile to use; Example: ${env.FEDORA_CI_RAWHIDE_RELEASE_ID}")
     }

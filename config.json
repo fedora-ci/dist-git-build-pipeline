@@ -1,8 +1,22 @@
 {
     "profiles": {
+        "f34": {
+            "base_tag": "f34-build"
+        },
         "f35": {
-            "base_tag": "f35-build",
-            "package_tag": "f35-updates"
+            "base_tag": "f35-build"
+        },
+        "f36": {
+            "base_tag": "f36-build"
+        },
+        "f37": {
+            "base_tag": "f37-build"
+        },
+        "f38": {
+            "base_tag": "f38-build"
+        },
+        "f39": {
+            "base_tag": "f39-build"
         }
     }
 }

@@ -39,7 +39,7 @@ if [[ "${RELEASE_ID}" == "${RAWHIDE_RELEASE_ID}" ]]; then
 elif [[ "${RELEASE_ID}" == f* ]]; then
     mock_config="fedora-${RELEASE_ID:1}-x86_64"
 elif [[ "${RELEASE_ID}" == epel* ]]; then
-    mock_config="epel-${RELEASE_ID:4}-x86_64"
+    mock_config="centos-stream+epel-${RELEASE_ID:4}-x86_64"
 fi
 
 srpm_log="${workdir}/mock_srpm.log"

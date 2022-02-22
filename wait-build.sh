@@ -4,7 +4,7 @@
 #
 # Return codes:
 # 0 success
-# 100 no build found for given package name
+# 1 failure
 # 150 bad params
 
 if [ $# -ne 1 ]; then
@@ -22,9 +22,11 @@ state="free"
 while true
 do
     "${koji_bin}" watch-task "${task_id}"
-    # Are we really done? The state of the task should be "closed"
+    # Are we done?
+    # free/open/assigned means not done yet
+    # closed/failed/cancelled means that the task is finished
     state=$("${koji_bin}" taskinfo "${task_id}" | grep '^State: ' | awk -F' ' '{ print $2 }')
-    if [ "${state}" == "free" ] || [ "${state}" == "open" ]; then
+    if [ "${state}" == "free" ] || [ "${state}" == "open" ] || [ "${state}" == "assigned" ]; then
         # Nope, the task is still in progress -- let's continue watching it...
         continue
     fi
@@ -32,7 +34,8 @@ do
     break
 done
 
-if [ "${state}" == "failed" ]; then
+# "closed" means success, everything else is a failure
+if [ "${state}" != "closed" ]; then
     exit 1
 fi
 

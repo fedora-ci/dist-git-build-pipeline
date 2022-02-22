@@ -38,6 +38,8 @@ if [[ "${RELEASE_ID}" == "${RAWHIDE_RELEASE_ID}" ]]; then
     mock_config="fedora-rawhide-x86_64"
 elif [[ "${RELEASE_ID}" == f* ]]; then
     mock_config="fedora-${RELEASE_ID:1}-x86_64"
+elif [[ "${RELEASE_ID}" == epel7 ]]; then
+    mock_config="centos+epel-7-x86_64"
 elif [[ "${RELEASE_ID}" == epel* ]]; then
     mock_config="centos-stream+epel-${RELEASE_ID:4}-x86_64"
 fi

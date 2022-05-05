@@ -44,7 +44,6 @@ elif [[ "${RELEASE_ID}" == epel* ]]; then
     mock_config="centos-stream+epel-${RELEASE_ID:4}-x86_64"
 fi
 
-srpm_log="${workdir}/mock_srpm.log"
 fedpkg_log_file="${workdir}/fedpkg.log"
 koji_url_file="${workdir}/koji_url"
 task_id_file="${workdir}/task_id"
@@ -52,7 +51,6 @@ task_id_file="${workdir}/task_id"
 set -e
 set -x
 
-rm -f ${srpm_log}
 rm -f "${fedpkg_log_file}"
 rm -f "${koji_url_file}"
 rm -f "${task_id_file}"
@@ -85,7 +83,7 @@ cd ${REPO_NAME}
 
 # Build SRPM
 fedpkg sources
-mock --isolation=simple -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source . | tee "${srpm_log}"
+mock --isolation=simple -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source .
 srpm_path=$(ls -1 | grep ".src.rpm$" | awk '{ print $1 }')
 srpm_name=$(basename ${srpm_path})
 new_srpm_name="fedora-ci_${PR_UID}_${PR_COMMIT}_${PR_COMMENT};${SOURCE_REPO_FULL_NAME//\//:}.${RELEASE_ID}.src.rpm"

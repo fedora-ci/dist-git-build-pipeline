@@ -38,7 +38,7 @@ pipeline {
 
     options {
         buildDiscarder(logRotator(daysToKeepStr: env.DEFAULT_DAYS_TO_KEEP_LOGS, artifactNumToKeepStr: env.DEFAULT_ARTIFACTS_TO_KEEP))
-        timeout(time: env.DEFAULT_PIPELINE_TIMEOUT_MINUTES, unit: 'MINUTES')
+        timeout(time: '24', unit: 'HOURS')
     }
 
     parameters {

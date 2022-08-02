@@ -92,7 +92,7 @@ mv ${srpm_name} ${new_srpm_name}
 # Scratch-build the SRPM in Koji
 kinit -k -t ${KOJI_KEYTAB} ${KRB_PRINCIPAL}
 
-${fedpkg_bin} scratch-build --nowait ${FEDPKG_OPTS} --target ${RELEASE_ID} --srpm ${new_srpm_name} | tee "${fedpkg_log_file}"
+${fedpkg_bin} scratch-build --nowait --fail-fast ${FEDPKG_OPTS} --target ${RELEASE_ID} --srpm ${new_srpm_name} | tee "${fedpkg_log_file}"
 
 cat "${fedpkg_log_file}" | grep '^Task info: ' | awk '{ print $3 }' | tee "${koji_url_file}"
 

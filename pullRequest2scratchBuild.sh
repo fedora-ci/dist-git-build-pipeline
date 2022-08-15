@@ -83,7 +83,7 @@ cd ${REPO_NAME}
 
 # Build SRPM
 fedpkg sources
-mock --isolation=simple -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source .
+mock --isolation=simple --verbose -r "${mock_config}" --resultdir=./ --buildsrpm --spec *.spec --source .
 srpm_path=$(ls -1 | grep ".src.rpm$" | awk '{ print $1 }')
 srpm_name=$(basename ${srpm_path})
 new_srpm_name="fedora-ci_${PR_UID}_${PR_COMMIT}_${PR_COMMENT};${SOURCE_REPO_FULL_NAME//\//:}.${RELEASE_ID}.src.rpm"

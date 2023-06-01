@@ -32,16 +32,24 @@ fedpkg_bin=${FEDPKG_BIN:-/usr/bin/fedpkg}
 pagure_url=${PAGURE_URL:-https://src.fedoraproject.org}
 mock_config="${RELEASE_ID}-x86_64"
 
-# If the release id starts with "f", then assume it is a Fedora release (e.g.: f35)
-# and fix the mock config name
+
+# Guess the mock config name from the release id
+epel_pattern="epel[0-9]+$"
+epel_next_pattern="epel[0-9]+-next$"
 if [[ "${RELEASE_ID}" == "${RAWHIDE_RELEASE_ID}" ]]; then
+    # rawhide
     mock_config="fedora-rawhide-x86_64"
 elif [[ "${RELEASE_ID}" == f* ]]; then
     mock_config="fedora-${RELEASE_ID:1}-x86_64"
 elif [[ "${RELEASE_ID}" == epel7 ]]; then
+    # just EPEL 7, there is no CentOS Stream 7
     mock_config="centos+epel-7-x86_64"
-elif [[ "${RELEASE_ID}" == epel* ]]; then
+elif [[ "${RELEASE_ID}" =~ $epel_pattern ]]; then
+    # EPEL 8+
     mock_config="centos-stream+epel-${RELEASE_ID:4}-x86_64"
+elif [[ "${RELEASE_ID}" =~ $epel_next_pattern ]]; then
+    # EPEL 8+ Next
+    mock_config="centos-stream+epel-next-${RELEASE_ID:4:1}-x86_64"
 fi
 
 fedpkg_log_file="${workdir}/fedpkg.log"

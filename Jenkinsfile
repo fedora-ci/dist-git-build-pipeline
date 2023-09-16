@@ -125,9 +125,20 @@ pipeline {
             }
         }
     }
+
     post {
         success {
             sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+
+            // Run the installability test on the scratch build, and report results back to the pull request
+            build(
+                wait: false,
+                job: 'fedora-ci/installability-pipeline/master',
+                parameters: [
+                    string(name: 'ARTIFACT_ID', value: "(koji-build:${taskId})->${artifactId}"),
+                    string(name: 'TEST_PROFILE', value: releaseId)
+                ]
+            )
         }
         failure {
             sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)

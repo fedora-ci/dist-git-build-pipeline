@@ -84,41 +84,31 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
-                REPO_FULL_NAME = "${params.REPO_FULL_NAME}"
-                SOURCE_REPO_FULL_NAME = "${sourceRepo}"
-                REPO_NAME = "${params.REPO_FULL_NAME.split('/')[1]}"
-                RELEASE_ID = "${releaseId}"
-                PR_ID = "${params.PR_ID}"
-                PR_UID = "${params.PR_UID}"
-                PR_COMMIT = "${params.PR_COMMIT}"
-                PR_COMMENT = "${params.PR_COMMENT}"
-                RAWHIDE_RELEASE_ID = "${FEDORA_CI_RAWHIDE_RELEASE_ID}"
             }
 
             steps {
                 script {
                     timeout(time: 240, unit: 'MINUTES') {
-                        // lock buildroot
-                        lock("${env.NODE_NAME}-mock-buildroot") {
-                            def rc = sh(returnStatus: true, script: './pullRequest2scratchBuild.sh')
-                            if (fileExists('koji_url')) {
-                                kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
-                            }
-                            if (fileExists('task_id')) {
-                                taskId = readFile("${env.WORKSPACE}/task_id").trim()
-                            }
-                            if (!kojiUrl || !taskId) {
-                                error('Failed to submit a scratch-build')
+                        def rc = sh(returnStatus: true, script: "./scratch-build.sh koji ${releaseId}-candidate git+https://src.fedoraproject.org/${sourceRepo}.git#${params.PR_COMMIT}")
+                        if (fileExists('koji_url')) {
+                            kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
+                        }
+                        if (fileExists('task_id')) {
+                            taskId = readFile("${env.WORKSPACE}/task_id").trim()
+                        }
+                        catchError(buildResult: 'UNSTABLE') {
+                            if (rc != 0) {
+                                error('Failed to scratch build the pull request.')
                             }
                         }
-                    }
-                    sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+                        sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
 
-                    // Wait for the scratch-build to finish
-                    def rc = sh(returnStatus: true, script: "./wait-build.sh ${taskId}")
-                    catchError(buildResult: 'UNSTABLE') {
-                        if (rc != 0) {
-                            error("Scratch-build failed in Koji")
+                        // Wait for the scratch-build to finish
+                        rc = sh(returnStatus: true, script: "./wait-build.sh ${taskId}")
+                        catchError(buildResult: 'UNSTABLE') {
+                            if (rc != 0) {
+                                error("Scratch-build failed in Koji")
+                            }
                         }
                     }
                 }
@@ -129,6 +119,16 @@ pipeline {
     post {
         success {
             sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+
+            // Run dist-git tests on the scratch build, and report results back to the pull request
+            build(
+                wait: false,
+                job: 'fedora-ci/dist-git-pipeline/master',
+                parameters: [
+                    string(name: 'ARTIFACT_ID', value: "(koji-build:${taskId})->${artifactId}"),
+                    string(name: 'TEST_PROFILE', value: releaseId)
+                ]
+            )
 
             // Run the installability test on the scratch build, and report results back to the pull request
             build(

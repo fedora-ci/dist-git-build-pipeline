@@ -40,7 +40,7 @@ fi
 
 kinit -k -t ${KOJI_KEYTAB} ${KRB_PRINCIPAL}
 
-koji -p ${profile} build --scratch --fail-fast --nowait ${target} ${source_url} > ${koji_log}
+koji -p ${profile} build --scratch --background --fail-fast --nowait ${target} ${source_url} > ${koji_log}
 cat ${koji_log}
 
 cat ${koji_log} | grep '^Task info: ' | awk '{ print $3 }' > ${koji_url}

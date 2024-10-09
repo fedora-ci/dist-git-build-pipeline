@@ -88,7 +88,7 @@ pipeline {
 
             steps {
                 script {
-                    timeout(time: 240, unit: 'MINUTES') {
+                    timeout(time: 600, unit: 'MINUTES') {
                         def rc = sh(returnStatus: true, script: "./scratch-build.sh koji ${releaseId}-candidate git+https://src.fedoraproject.org/${sourceRepo}.git#${params.PR_COMMIT}")
                         if (fileExists('koji_url')) {
                             kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()

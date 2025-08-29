@@ -1,0 +1,15 @@
+name: Pipeline-Linter
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  syntax_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check Jenkinsfile file
+        run: bash ./tests/pipeline_linter.sh Jenkinsfile

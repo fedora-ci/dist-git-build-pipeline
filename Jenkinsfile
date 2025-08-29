@@ -7,6 +7,8 @@ retry (10) {
     }
 }
 
+def buildTimeout = 600
+
 def releaseId
 def sourceRepo
 
@@ -49,6 +51,7 @@ pipeline {
         string(name: 'PR_UID', defaultValue: '', description: "Pagure's unique internal pull-request Id")
         string(name: 'PR_COMMIT', defaultValue: '', description: 'Commit Id (hash) of the last commit in the pull-request')
         string(name: 'PR_COMMENT', defaultValue: '0', description: "Pagure's internal Id of the comment which triggered CI testing; 0 (zero) if the testing was triggered by simply opening the pull-request")
+        booleanParam(name: 'IGNORE_TASK_ID_CACHE', defaultValue: false, description: "Ignore the previous commit's scratch-build cache")
     }
 
     stages {
@@ -84,12 +87,26 @@ pipeline {
             environment {
                 KOJI_KEYTAB = credentials('fedora-keytab')
                 KRB_PRINCIPAL = 'bpeck/jenkins-continuous-infra.apps.ci.centos.org@FEDORAPROJECT.ORG'
+                // TODO: What's the actual host?
+                VALKEY_HOST = "localhost"
             }
 
             steps {
                 script {
-                    timeout(time: 600, unit: 'MINUTES') {
-                        def rc = sh(returnStatus: true, script: "./scratch-build.sh koji ${releaseId}-candidate git+https://src.fedoraproject.org/${sourceRepo}.git#${params.PR_COMMIT}")
+                    lock("check-concurrent-builds") {
+                        def jobname = env.JOB_NAME
+                        def output = sh(returnStdout: true, script: "python3 ./jenkins_build.py replace ${sourceRepo} ${params.PR_ID}").trim()
+                        if (output != null && output != '') {
+                            def job = Jenkins.instance.getItemByFullName(jobname)
+                            job.getBuildByNumber(output).doStop()
+                        }
+                    }
+                    timeout(time: buildTimeout, unit: 'MINUTES') {
+                        // We don't really care if koji_find_task.py fails, the task_id/koji_url should be empty then
+                        def rc = sh(returnStdout: true, script: "python3 ./koji_task.py find ${sourceRepo} ${params.PR_COMMIT}")
+                        if (params.IGNORE_TASK_ID_CACHE || !fileExists('task_id')){
+                            rc = sh(returnStatus: true, script: "./scratch-build.sh koji ${releaseId}-candidate git+https://src.fedoraproject.org/${sourceRepo}.git#${params.PR_COMMIT}")
+                        }
                         if (fileExists('koji_url')) {
                             kojiUrl = readFile("${env.WORKSPACE}/koji_url").trim()
                         }
@@ -101,6 +118,8 @@ pipeline {
                                 error('Failed to scratch build the pull request.')
                             }
                         }
+                        // Similarly with koji_find_task, we don't really care if this fails
+                        rc = sh(returnStdout: true, script: "python3 ./koji_task.py save ${sourceRepo} ${params.PR_COMMIT}")
                         sendMessage(type: 'running', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
 
                         // Wait for the scratch-build to finish
@@ -118,6 +137,9 @@ pipeline {
 
     post {
         success {
+            lock("check-concurrent-builds") {
+                sh(script: "python3 ./jenkins_build.py finish ${sourceRepo} ${params.PR_ID}")
+            }
             sendMessage(type: 'complete', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
 
             // Run dist-git tests on the scratch build, and report results back to the pull request
@@ -139,6 +161,18 @@ pipeline {
                     string(name: 'TEST_PROFILE', value: releaseId)
                 ]
             )
+        }
+        aborted {
+            script{
+                // This can be either because it has timed-out or the job was canceled
+                if (isTimeoutAborted(timeout: buildTimeout, unit: 'MINUTES')) {
+                        // If it times-out than we should do nothing, but send a report to dist-git that it failed
+                    sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
+                } else {
+                        // Otherwise, it probably was canceled, so do not report anything, just cancel the koji build
+                    sh(returnStatus: true, script: "koji cancel ${taskId}")
+                }
+            }
         }
         failure {
             sendMessage(type: 'error', artifactId: artifactId, pipelineMetadata: pipelineMetadata, dryRun: isPullRequest(), runUrl: kojiUrl)
